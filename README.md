@@ -4,6 +4,8 @@ This repository contains RL algorithms for highway application with the usage of
 ## Requirements:
 SUMO environment can be used with `https://github.com/szkLaszlo/continuousSUMO.git` branch `changes_for_fast_cl`.
 
+For the intersection-env you need to clone `https://github.com/szkLaszlo/rl-agents.git` main branch into a 'rlagents' folder in your WORKSPACE.
+
 ##Using the code with Docker:
 **Note: First, check if you have right to use docker on your machine.
 ```docker ps```
