@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-10-12 15:01:43 by Eclipse SUMO GUI Version 1.9.2
+-->
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="merge.net.xml"/>
+		<route-files value="merge_demand.rou.xml"/>
+    </input>
+		<step-length value="0.1" />
+	<time>
+        <begin value="0"/>
+        <end value="3600"/>
+    </time>
+
+</configuration>

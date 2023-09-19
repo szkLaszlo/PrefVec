@@ -1,0 +1,37 @@
+version: '3'
+services:
+  sumo:
+    image: szokelaszlo95/sumo-dev
+    volumes:
+     - /home:/home
+     - /cache:/cache
+     - /:/mnt/host
+     - ./entry.sh:/entry.sh
+     - ./user_entry.sh:/user_entry.sh
+     - $HOME/.Xauthority:/root/.Xauthority:rw
+     - /tmp/.X11-unix:/tmp/.X11-unix
+     - /etc/sudoers:/etc/sudoers:ro                          # inherit sudoers settings from hosts
+     - /etc/passwd:/etc/passwd:ro
+     - /etc/shadow:/etc/shadow:ro
+    environment:
+    - DISPLAY=${DISPLAY}
+    - QT_X11_NO_MITSHM=1
+    - USER=$USER
+    - UID=$UID
+    - HOST_USER=$USER
+    - WORKSPACE=$WORKSPACE
+    - HOST_UID=$UID
+    - _JAVA_OPTIONS=-Duser.home=/home/$USER/    # for Java based apps, i.e. PyCharm, CLion
+    - NVIDIA_VISIBLE_DEVICES=all
+    runtime: nvidia
+    entrypoint: ["/entry.sh"]
+    ipc: host
+
+    container_name: sumo
+    hostname: sumo-dev
+    working_dir: $HOME
+
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
