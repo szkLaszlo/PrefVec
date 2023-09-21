@@ -266,7 +266,7 @@ def select_environment(args):
                                     use_random_speed=getattr(args, 'use_random_speed', False),
                                     )
 
-    elif args.env_model == "walk":
+    elif args.env_model == "grid":
         env = GridWorld(env_config={"n": args.arena_size,
                                     "default_w": args.default_w,
                                     "offscreen_rendering": False if args.mode == "human" else True,

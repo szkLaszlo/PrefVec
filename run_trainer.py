@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # Constructing the env parser
     env_parser = argparse.ArgumentParser(description='Environment parser', add_help=False)
     env_parser.add_argument("--env_model", type=str, default="merge",
-                            choices=["merge", "intersection", "walk"])
+                            choices=["merge", "intersection", "grid"])
     env_parser.add_argument("--grid_type", type=str, default="semi_static",
                             choices=["random", "static", "semi_static"], )
     env_parser.add_argument("--obs_type", type=str, default="grid", choices=["grid"])
