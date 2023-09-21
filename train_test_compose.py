@@ -11,8 +11,8 @@ import numpy
 import torch.cuda
 
 from continuousSUMO.sumoGym.environment import makeContinuousSumoEnv
-from PrefVeC.PrefVeC.model import FastRLWrapper, PrefVeC, CLDQNWrapper, Q
-from PrefVeC.PrefVeC.preferences import CLPreferenceSelector, DefaultPolicySelector
+from PrefVeC.model_prefvec.model import FastRLWrapper, PrefVeC, CLDQNWrapper, Q
+from PrefVeC.model_prefvec.preferences import CLPreferenceSelector, DefaultPolicySelector
 from PrefVeC.QN.q_agent import DQNWrapper
 from PrefVeC.other_envs.grid import GridWorld
 from PrefVeC.other_envs.highway_cl import CumulantIntersectionEnv

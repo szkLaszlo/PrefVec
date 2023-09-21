@@ -7,7 +7,7 @@ import sys
 
 from numpy.distutils.fcompiler import str2bool
 
-from PrefVeC.train_test_functions_deepmind import model_train, model_batch_test, model_test
+from PrefVeC.train_test_compose import model_train, model_batch_test, model_test
 from PrefVeC.utils.utils import store_as_array, str2dict, store_as_array2
 
 if __name__ == "__main__":
