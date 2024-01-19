@@ -12,6 +12,7 @@ from typing import Dict
 
 import numpy as np
 import ray
+import torch
 from numpy.distutils.fcompiler import str2bool
 from ray.rllib import RolloutWorker, BaseEnv, Policy
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
@@ -172,7 +173,7 @@ def save_training_args(args, save_path, add_git_hash=True):
 
 
 def train_function(args):
-    ray.init(local_mode=True)
+    ray.init()
     env, env_config = select_env(args)
 
     if args.algorithm == "ppo":
@@ -181,7 +182,7 @@ def train_function(args):
         model_config = SACConfig()
     else:
         raise ValueError("Algorithm not supported")
-
+    num_gpus = 1 if torch.cuda.is_available() else 0
     config = (
         model_config
         .environment(env=env, env_config=env_config, normalize_actions=False, clip_actions=True)
@@ -191,6 +192,7 @@ def train_function(args):
                     evaluation_parallel_to_training=True,
                     evaluation_config=model_config.overrides(explore=False),
                     evaluation_num_workers=2)
+        .resources(num_gpus=num_gpus)
         # .callbacks(MyCallbacks)
         .framework("torch")
     )
@@ -200,7 +202,7 @@ def train_function(args):
         args.comment = comment
     name = args.env_model + "_" + args.algorithm + "_" + str(args.seed) + "_" + str(args.comment)
 
-    algo = config.build(logger_creator=custom_log_creator('/tmp/ray/ray_results', name))
+    algo = config.build(logger_creator=custom_log_creator('/mnt/host/mnt/hdd/rllib_prefvec', name))
     save_training_args(args, algo.logdir)
 
     # training the agent
