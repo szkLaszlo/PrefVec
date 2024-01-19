@@ -204,6 +204,7 @@ class FastRLWrapper(DQNWrapper):
 
         self.mix_policies = mix_policies
         self.use_cumulants = True
+        self.rho = kwargs.get("rho", 0.1)
 
     def forward_for_action(self, state_, **kwargs):
         """
@@ -421,13 +422,16 @@ class FastRLWrapper(DQNWrapper):
         return min_value_to_change
 
     def select_min_value_from_list(self, list_of_diffs):
-        # select min change value based on the expected 10% action change
-        min_value_to_change = list_of_diffs[int(len(list_of_diffs) * 0.1) + 1]
+        # select min change value based on the expected self.rho % action change
+        min_value_to_change = list_of_diffs[int(len(list_of_diffs) * self.rho) + 1]
         if min_value_to_change > 0:
             idx = 1
             for idx, min_ in enumerate(list_of_diffs):
                 if min_ > 0:
+                    warnings.warn(f"Could not find a value to change with the given rho value."
+                                  f"Selecting {idx/len(list_of_diffs)}% = {list_of_diffs[idx-1]} weight change")
                     break
+
             min_value_to_change = list_of_diffs[idx - 1]
         return min_value_to_change
 

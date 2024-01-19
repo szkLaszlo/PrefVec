@@ -60,7 +60,8 @@ def model_train(args):
                            sequential=args.sequential,
                            copy_policy=args.copy_policy,
                            dynamic_preference=args.dynamic_preference,
-                           weight_loss_with_sf=getattr(args, "weight_loss_with_sf", True)
+                           weight_loss_with_sf=getattr(args, "weight_loss_with_sf", True),
+                           rho=getattr(args, "rho", 0.1),
                            )
 
     # Calculate where the decay ends
