@@ -92,7 +92,7 @@ if __name__ == "__main__":
     model_parser.add_argument("--preference_type", type=str, default="cl", choices=["cl", "default"])
     model_parser.add_argument("--network_type", type=str, default="mlp", choices=["mlp", "attention"])
     model_parser.add_argument("--rho", type=float, default=0.1,
-                              info="Defines the delta for the CL model: how much of the actions need to change"
+                             help="Defines the delta for the CL model: how much of the actions need to change"
                                    "at one preference weigth change step.")
     model_parser.add_argument("--use_double_model", type=str2bool, default=True)
     model_parser.add_argument("--weight_loss_with_sf", type=str2bool, default=True)
