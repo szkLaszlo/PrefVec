@@ -31,6 +31,15 @@ if __name__ == "__main__":
     env_parser = argparse.ArgumentParser(description='Environment parser', add_help=False)
     env_parser.add_argument("--env_model", type=str, default="merge",
                             choices=["merge", "intersection", "grid"])
+    # attributes for all environments
+    env_parser.add_argument("--default_w", type=float, nargs='+', action=store_as_array2, default=None,
+                            # todo: use this line is for Q-agent learning
+                            # env_parser.add_argument("--default_w", type=float, nargs='+', action=store_as_array, default=[-1000, 1],
+                            help="If None, all the objects will get reward 1. "
+                                 "Note: this should be 1 for all, and the model wrapper's w should be used.")
+    env_parser.add_argument("--env_seed", type=int, default=None)
+
+    # attributes for gridworld
     env_parser.add_argument("--grid_type", type=str, default="semi_static",
                             choices=["random", "static", "semi_static"], )
     env_parser.add_argument("--obs_type", type=str, default="grid", choices=["grid"])
@@ -43,12 +52,8 @@ if __name__ == "__main__":
                             help="Defines the max step the agent can take in an episode")
     env_parser.add_argument("--num_init_objects", type=int, default=10,
                             help="Defines how many objects to have at the beginning of each episode.")
-    env_parser.add_argument("--default_w", type=float, nargs='+', action=store_as_array2, default=None,
-    # todo: use this line is for Q-agent learning
-    # env_parser.add_argument("--default_w", type=float, nargs='+', action=store_as_array, default=[-1000, 1],
-                            help="If None, all the objects will get reward 1. "
-                                 "Note: this should be 1 for all, and the model wrapper's w should be used.")
-    # SUMO related parameters.
+
+    # attributes for merge env
     env_parser.add_argument("--simulation_directory", type=str, default='./sumo_simulations',
                             help="This is where the simulations are loaded from.")
     env_parser.add_argument("--type_os", type=str, default="merge",
@@ -65,7 +70,8 @@ if __name__ == "__main__":
                             help="Defines how often to change the desired speed of the ego")
     env_parser.add_argument("--save_log_path", type=str, default=None,
                             help="Defines where to save the simulation data., if None, a timestamp will be used.")
-    env_parser.add_argument("--env_seed", type=int, default=None)
+
+    # attributes for intersection env
     env_parser.add_argument("--go_straight", type=str2bool, default=False)
     env_parser.add_argument("--vehicles_to_see", type=int, default=15)
     env_parser.add_argument("--init_vehicles", type=int, default=10)
@@ -81,7 +87,7 @@ if __name__ == "__main__":
     model_parser = argparse.ArgumentParser(description='Model parser', add_help=False)
 
     model_parser.add_argument("--model_version", type=str, default="cl", choices=["q", "cl", ])
-    model_parser.add_argument("--model_train_type", type=str, default="sequential",
+    model_parser.add_argument("--model_train_type", type=str, default="dynamic",
                               choices=["parallel", "q", "sequential", "dynamic", "contiQ"])
     model_parser.add_argument("--preference_type", type=str, default="cl", choices=["cl", "default"])
     model_parser.add_argument("--network_type", type=str, default="mlp", choices=["mlp", "attention"])
@@ -99,16 +105,16 @@ if __name__ == "__main__":
     wrapper_parser.add_argument("--w", type=float, nargs='+', action=store_as_array,
                                 default=[
                                     [0, 1],
-                                    [-2, 1],
-                                    [-50, 1],
-                                    [-100, 1],
-                                    [-500, 1],
-                                    [-1000, 1],
+                                    [0, 1],
+                                    [0, 1],
+                                    [0, 1],
+                                    [0, 1],
+                                    [-1000000, 1],
                                 ],
                                 help="Successor feature weights. Note: when using from terminal, "
                                      "you have to start with the number of policies, "
                                      "and you need to list the elements one by one")
-    wrapper_parser.add_argument("--eval_w", type=float, nargs='+', action=store_as_array, default=[[-1000, 1]])
+    wrapper_parser.add_argument("--eval_w", type=float, nargs='+', action=store_as_array, default=[[-1000000, 1]])
     wrapper_parser.add_argument("--mix_policies", type=str2bool, default=False,
                                 help="If set to true all policies are informed of the others mistakes.")
 
