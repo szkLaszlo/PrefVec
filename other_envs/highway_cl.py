@@ -75,18 +75,18 @@ class DiscreteMeta(ActionType):
         self.controlled_vehicle.act(action)
 
 class CumulantIntersectionEnv(IntersectionEnv):
-    def __init__(self, default_w=None, config=None, **kwargs):
-        self.default_w = np.asarray(default_w) if default_w else np.ones((3,))
-        self.observation_space_n = len(config["observation"]["features"])
-        self.video_history = [] if config.get("video", False) else None
-        self.flatten_obs = config["observation"]["flatten"]
-        super(CumulantIntersectionEnv, self).__init__(config=config)
+    def __init__(self, env_config, **kwargs):
+        self.default_w = np.asarray(env_config['default_w']) if env_config.get('default_w', False) else np.ones((3,))
+        self.observation_space_n = len(env_config["observation"]["features"])
+        self.video_history = [] if env_config.get("video", False) else None
+        self.flatten_obs = env_config["observation"]["flatten"]
+        super(CumulantIntersectionEnv, self).__init__(config=env_config)
         self.seed_ = 42
         self.seed(self.seed_)
         self.rendering = False if self.config["offscreen_rendering"] else True
         setattr(self.observation_space, 'n', self.observation_space_n)
         setattr(self.action_space, 'n', 3)
-        self.dt = 1 / config["policy_frequency"]
+        self.dt = 1 / env_config["policy_frequency"]
 
     def _get_cumulants(self, vehicle: Vehicle):
         scaled_speed = utils.lmap(self.vehicle.speed, self.config["reward_speed_range"], [0, 1])
@@ -101,8 +101,8 @@ class CumulantIntersectionEnv(IntersectionEnv):
         reward = sum(self.default_w * cumulants)
         return reward
 
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
-        obs, reward, done, info = super().step(action)
+    def step(self, action: int):
+        obs, reward, done, truncated,  info = super().step(action)
         if self.video_history is not None:
             self.video_history.append(self.render('rgb_array'))
         if self.rendering:
@@ -111,7 +111,7 @@ class CumulantIntersectionEnv(IntersectionEnv):
         info["cumulants"] = cumulants
         info["cause"] = "slow" if done and not self.vehicle.crashed and not self.has_arrived(self.vehicle) else "collision" if self.vehicle.crashed else None
 
-        return obs, reward, done, info
+        return obs, reward, done, truncated, info
 
     def get_max_reward(self, temp_reward):
         return np.array([1, 1, 1])
@@ -148,15 +148,15 @@ class CumulantIntersectionEnv(IntersectionEnv):
             self.np_random = seed
             return None
         else:
-            seed_ = super().seed(seed)
+            seed_ = super().reset(seed=seed)
             self.seed_ = self.np_random
         return seed_
 
-    def reset(self) -> Observation:
-        obs = super().reset()
+    def reset(self, *, seed=None, options=None):
+        obs, info = super().reset()
         if self.video_history is not None:
             self.video_history = []
-        return obs
+        return obs, info
 
 
 class CumulantWrapper(IntersectionEnv):

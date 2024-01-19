@@ -3,11 +3,11 @@ import random
 import time
 from typing import Tuple, List, Generator
 
-import gym
+import gymnasium as gym
 import numpy as np
 import pygame
-from gym import spaces
-from gym.utils import seeding
+from gymnasium import spaces
+from gymnasium.utils import seeding
 
 from PrefVeC.utils.utils import save_images_to_video
 
@@ -192,7 +192,7 @@ class GridWorld(gym.Env):
         self.default_w = np.asarray(default_w, dtype=np.float32) if default_w else np.ones((2,), dtype=np.float32)
 
         self.action_space = spaces.Discrete(5)  # Up, Down, Left, Right, None
-        self.observation_space = spaces.Box(low=0, high=1, shape=(self.n - 6, self.n), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=1, shape=(self._create_obs().shape[0],), dtype=np.float32)
         self.grid_type = env_config.get("grid_type", "static")  # static, random, semi_static
         self.obs_type = env_config.get("obs_type", "position")  # grid, position
         assert (self.grid_type in ["random"] and self.obs_type not in ["position"]) or self.grid_type in ["static",
@@ -213,19 +213,19 @@ class GridWorld(gym.Env):
         self.dist_to_goal = None
         setattr(self.observation_space, 'n', self._create_obs().shape[0])
 
-    def reset(self, seed=None, **kwargs):
+    def reset(self, *, seed=None, options=None):
         env_choice = [0, 0] if self.grid_type in "static" else [0, 1]
         self.grid = np.array(
             [grid1, grid2][self.np_random.choice(env_choice)]) if "static" in self.grid_type else np.zeros(
             (self.n, self.n, 3))
         self.start_pos = tuple(np.concatenate(np.where(self.grid[:, :, 1] == 1.))) if "static" in self.grid_type else (
-            self.np_random.randint(0, self.n), self.np_random.randint(0, self.n))
+            self.np_random.integers(0, self.n), self.np_random.integers(0, self.n))
 
         self.end_pos = tuple(np.concatenate(np.where(self.grid[:, :, 2] == 1.))) if "static" in self.grid_type else (
-            self.np_random.randint(0, self.n), self.np_random.randint(0, self.n))
+            self.np_random.integers(0, self.n), self.np_random.integers(0, self.n))
         while "static" not in self.grid_type and self._calc_dist_betw_points(self.start_pos, self.end_pos) < \
                 self.grid.shape[0] // 2:
-            self.end_pos = (self.np_random.randint(0, self.n), self.np_random.randint(0, self.n))
+            self.end_pos = (self.np_random.integers(0, self.n), self.np_random.integers(0, self.n))
 
         # Generate a random path from start to end
         self.path = [tuple(a) for a in
@@ -241,9 +241,9 @@ class GridWorld(gym.Env):
         if self.np_random.uniform() > 0.5:
             self.current_pos = self.start_pos
         else:
-            point = self.path[self.np_random.randint(0, len(self.path))]
+            point = self.path[self.np_random.integers(0, len(self.path))]
             while self._calc_dist_betw_points(point, self.end_pos) < 2:
-                point = self.path[self.np_random.randint(0, len(self.path))]
+                point = self.path[self.np_random.integers(0, len(self.path))]
             self.current_pos = point
         self.start_pos = self.current_pos
         # add start position's neighbours to path
@@ -271,7 +271,7 @@ class GridWorld(gym.Env):
         state_ = self._create_obs()
         assert self.end_pos in self.path and self.start_pos in self.path
         self.render()
-        return state_
+        return state_, {"cumulants": np.array([0, 0], dtype=np.float32), }
 
     def render(self, mode='human'):
         if self.rendering:
@@ -346,11 +346,10 @@ class GridWorld(gym.Env):
                 "cause": cause,
                 "steps": self.current_step,
                 }
-        if done:
-            state_ = None
-        reward = sum(self.default_w * cumulants)
+
+        reward = np.float32((self.default_w * cumulants).sum())
         self.render()
-        return state_, reward, done, info
+        return state_, reward, done, done, info
 
     def _create_obs(self):
         self.grid = np.zeros((self.n, self.n, 3))
