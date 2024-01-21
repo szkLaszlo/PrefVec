@@ -69,20 +69,17 @@ class MyCallbacks(DefaultCallbacks):
         if hasattr(episode, "last_info_for"):
             info = episode.last_info_for()
             cause = info['cause']
-            cause_list = ["standing_still", "success", "far", "collision", "slow", "wrong_direction"]
-            for cause_i in cause_list:
-                if cause_i in cause:
-                    episode.custom_metrics[f"{cause_i}"] = 1
-                else:
-                    episode.custom_metrics[f"{cause_i}"] = 0
-            travelled_dist = info['travelled_dist']
-            episode.custom_metrics["travelled_dist"] = travelled_dist
-            dist_from_goal = info['dist_from_goal']
-            episode.custom_metrics["dist_from_goal"] = dist_from_goal
-            angle_to_goal = info['angle_to_goal']
-            episode.custom_metrics["angle_to_goal"] = angle_to_goal
         else:
-            pass
+            cause = episode._last_infos["agent0"]["cause"]
+            if cause is None:
+                assert episode._last_terminateds['agent0']
+                cause = "success"
+        cause_list = ["collision", "slow", "success"]
+        for cause_i in cause_list:
+            if cause_i in cause:
+                episode.custom_metrics[f"{cause_i}"] = 1
+            else:
+                episode.custom_metrics[f"{cause_i}"] = 0
 
 
 def custom_log_creator(custom_path, custom_str):
@@ -193,7 +190,7 @@ def train_function(args):
                     evaluation_config=model_config.overrides(explore=False),
                     evaluation_num_workers=2)
         .resources(num_gpus=num_gpus)
-        # .callbacks(MyCallbacks)
+        .callbacks(MyCallbacks)
         .framework("torch")
     )
     # create name for train

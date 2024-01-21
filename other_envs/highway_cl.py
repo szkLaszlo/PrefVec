@@ -109,7 +109,7 @@ class CumulantIntersectionEnv(IntersectionEnv):
             self.render()
         cumulants = self._get_cumulants(self.vehicle)
         info["cumulants"] = cumulants
-        info["cause"] = "slow" if done and not self.vehicle.crashed and not self.has_arrived(self.vehicle) else "collision" if self.vehicle.crashed else None
+        info["cause"] = "slow" if (done or truncated) and not self.vehicle.crashed and not self.has_arrived(self.vehicle) else "collision" if self.vehicle.crashed else None
 
         return obs, reward, done, truncated, info
 
