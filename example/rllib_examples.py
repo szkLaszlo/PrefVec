@@ -33,7 +33,7 @@ def train_algo(algo, exit_criteria="episode_reward_mean", exit_threshold=0.95, m
     current_checkpoint = None
     while result["evaluation"].get(exit_criteria, 0.) < exit_threshold:
         result.update(algo.train())
-        current_iteration += 1
+        current_iteration = result["episodes_total"]
         if verbose:
             print(f"Iteration: {result['training_iteration']} Reward: {result[exit_criteria]},"
                   f" evaluation {exit_criteria}: {result['evaluation'].get(exit_criteria, 0.)} ")
@@ -48,7 +48,7 @@ def train_algo(algo, exit_criteria="episode_reward_mean", exit_threshold=0.95, m
             current_checkpoint = algo.save()
 
         if max_iterations is not None and current_iteration >= max_iterations:
-            print(f"Maximum number of iterations reached: {max_iterations}")
+            print(f"Maximum number of episodes reached: {max_iterations}")
             break
     checkpoint_dir = algo.save()
     print(f"Checkpoint saved in directory {checkpoint_dir}")
@@ -203,7 +203,7 @@ def train_function(args):
     save_training_args(args, algo.logdir)
 
     # training the agent
-    train_algo(algo, exit_threshold=args.exit_threshold, max_iterations=1000, verbose=True)
+    train_algo(algo, exit_threshold=args.exit_threshold, max_iterations=args.max_iterations, verbose=True)
 
 
 if __name__ == "__main__":
@@ -235,6 +235,8 @@ if __name__ == "__main__":
     trainer_parser.add_argument('--seed', type=int, default=42, help='Random seed for all numpy/torch operations.')
     trainer_parser.add_argument("--exit_threshold", type=float, default=10.,
                                 help="The exit threshold for the training.")
+    trainer_parser.add_argument("--max_iterations", type=int, default=90000,
+                                help="The maximum number of episodes for the training.")
     trainer_parser.add_argument("--comment", type=str, default=None,
                                 help="Sets the comment of the training."
                                      "If None, it will ask for a comment before beginning training")
