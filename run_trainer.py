@@ -172,7 +172,7 @@ if __name__ == "__main__":
                                 help="If None then it will be created based on the time.")
     trainer_parser.add_argument("--render_video_freq", type=int, default=None,
                                 help="Defines after how many episodes we want to take videos.")
-    trainer_parser.add_argument("--max_episodes", type=int, default=90000,
+    trainer_parser.add_argument("--max_episodes", type=int, default=300000,
                                 help="Defines how many episodes to run.")
     trainer_parser.add_argument("--seed", type=int, default=5)
     trainer_parser.add_argument("--comment", type=str, default=None,
