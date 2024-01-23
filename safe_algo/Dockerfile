@@ -36,17 +36,20 @@ ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
 
 RUN echo "PATH=/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> /etc/environment
 RUN echo "PYTHONPATH=/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> /etc/environment
-
+RUN echo $PYTHONPATH
 RUN mkdir -p ~/miniconda3
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-RUN bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-check-certificate -O ~/miniconda3/miniconda.sh
+RUN bash ~/miniconda3/miniconda.sh -b -u -p /opt/conda
 RUN rm -rf ~/miniconda3/miniconda.sh
-RUN ~/miniconda3/bin/conda init bash
 
-COPY ../../omnisafe /omnisafe_zjy
-RUN cd /omnisafe_zjy
-RUN conda create -n omnisafe python=3.8
-RUN conda activate omnisafe
+ENV PATH=/opt/conda/bin:$PATH
+
+COPY ./omnisafe_zjy /omnisafe_zjy
+
+RUN conda init 
+RUN conda install -c anaconda -y python=3.8
+
+WORKDIR /omnisafe_zjy
 RUN pip install -e .
 RUN pip install highway_env opencv-python
 

@@ -4,10 +4,11 @@ services:
     image: szokelaszlo95/saferl_omnisafe
     volumes:
      - /home:/home
+     - $HOME/workspace/:/workspace
+     - $HOME/workspace/omnisafe_zjy:/omnisafe_zjy
      - /:/mnt/host
      - ./entry.sh:/entry.sh
      - ./user_entry.sh:/user_entry.sh
-     - /mnt/hdd/ray_cluster:/tmp/ray/ray_results
      - $HOME/.Xauthority:/root/.Xauthority:rw
      - /tmp/.X11-unix:/tmp/.X11-unix
      - /etc/sudoers:/etc/sudoers:ro                          # inherit sudoers settings from hosts
@@ -25,7 +26,7 @@ services:
     - _JAVA_OPTIONS=-Duser.home=/home/$USER/    # for Java based apps, i.e. PyCharm, CLion
     - NVIDIA_VISIBLE_DEVICES=all
     runtime: nvidia
-    entrypoint: ["/entry.sh","true"]
+    entrypoint: ["/entry.sh"]
     ipc: host
     container_name: saferl
     hostname: saferl
