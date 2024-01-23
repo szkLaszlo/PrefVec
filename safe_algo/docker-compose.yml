@@ -1,0 +1,38 @@
+version: '3'
+services:
+  saferl:
+    image: szokelaszlo95/saferl_omnisafe
+    volumes:
+     - /home:/home
+     - /:/mnt/host
+     - ./entry.sh:/entry.sh
+     - ./user_entry.sh:/user_entry.sh
+     - /mnt/hdd/ray_cluster:/tmp/ray/ray_results
+     - $HOME/.Xauthority:/root/.Xauthority:rw
+     - /tmp/.X11-unix:/tmp/.X11-unix
+     - /etc/sudoers:/etc/sudoers:ro                          # inherit sudoers settings from hosts
+     - /etc/passwd:/etc/passwd:ro
+     - /etc/shadow:/etc/shadow:ro
+    environment:
+    - DISPLAY=${DISPLAY}
+    - QT_X11_NO_MITSHM=1
+    - USER=$USER
+    - UID=$UID
+    - GID=$GID
+    - HOST_USER=$USER
+    - WORKSPACE=$WORKSPACE
+    - HOST_UID=$UID
+    - _JAVA_OPTIONS=-Duser.home=/home/$USER/    # for Java based apps, i.e. PyCharm, CLion
+    - NVIDIA_VISIBLE_DEVICES=all
+    runtime: nvidia
+    entrypoint: ["/entry.sh","true"]
+    ipc: host
+    container_name: saferl
+    hostname: saferl
+    working_dir: $HOME
+    shm_size: '16gb'
+
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined

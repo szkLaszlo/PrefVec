@@ -3,9 +3,9 @@ import os
 import warnings
 from typing import Tuple, Optional, Callable, Union
 
+import gymnasium
 import numpy as np
 import pygame
-from gym import spaces
 from highway_env import utils
 from highway_env.envs import IntersectionEnv, observation_factory
 from highway_env.envs.common.abstract import Observation
@@ -64,8 +64,8 @@ class DiscreteMeta(ActionType):
         super().__init__(env)
         self.target_speeds = np.array(target_speeds) if target_speeds is not None else MDPVehicle.DEFAULT_TARGET_SPEEDS
 
-    def space(self) -> spaces.Space:
-        return spaces.Discrete(3)
+    def space(self) -> gymnasium.spaces.Space:
+        return gymnasium.spaces.Discrete(3)
 
     @property
     def vehicle_class(self) -> Callable:
@@ -87,6 +87,8 @@ class CumulantIntersectionEnv(IntersectionEnv):
         setattr(self.observation_space, 'n', self.observation_space_n)
         setattr(self.action_space, 'n', 3)
         self.dt = 1 / env_config["policy_frequency"]
+        # self.observation_space = gymnasium.spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_space_n,))
+        self.observation_space = gymnasium.spaces.Box(low=-np.inf, high=np.inf, shape=(np.multiply(*self.observation_space.shape),))
 
     def _get_cumulants(self, vehicle: Vehicle):
         scaled_speed = utils.lmap(self.vehicle.speed, self.config["reward_speed_range"], [0, 1])
@@ -107,9 +109,12 @@ class CumulantIntersectionEnv(IntersectionEnv):
             self.video_history.append(self.render('rgb_array'))
         if self.rendering:
             self.render()
+        if self.flatten_obs:
+            obs = obs.flatten()
         cumulants = self._get_cumulants(self.vehicle)
         info["cumulants"] = cumulants
         info["cause"] = "slow" if (done or truncated) and not self.vehicle.crashed and not self.has_arrived(self.vehicle) else "collision" if self.vehicle.crashed else None
+        info["cost"] = abs(cumulants[0]*self.default_w[0])
 
         return obs, reward, done, truncated, info
 
@@ -154,6 +159,8 @@ class CumulantIntersectionEnv(IntersectionEnv):
 
     def reset(self, *, seed=None, options=None):
         obs, info = super().reset()
+        if self.flatten_obs:
+            obs = obs.flatten()
         if self.video_history is not None:
             self.video_history = []
         return obs, info
