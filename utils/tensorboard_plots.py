@@ -44,8 +44,9 @@ if __name__ == "__main__":
     # Folder containing tensorboard files
     folder_path = '/cache/PrefVeC_results_forv2/extra_algos/'
     saved_file_name = "data_extract_pd"
-    timestep_keys = ["ray/tune/episodes_total", ]
-    smoothing_window = 3
+    timestep_keys = ["ray/tune/episodes_total", "TotalEpisodes"]
+    max_episodes = 20000 if "grid" in folder_path else 300000 if "ablation" in folder_path else 90000
+    smoothing_window = 5
     # List all subdirectories (assuming each subdirectory corresponds to a different model)
     subdirectories = [os.path.join(folder_path, name) for name in os.listdir(folder_path) if
                       os.path.isdir(os.path.join(folder_path, name))]
@@ -55,9 +56,9 @@ if __name__ == "__main__":
     names_for_y_axes = {
         # "Mean Episode Reward": ["ray/tune/evaluation/episode_reward_mean", "evaluation/reward_0"],
         # "Mean Episode Length": ["ray/tune/evaluation/episode_len_mean", ""],
-        "Success Rate": ["ray/tune/evaluation/custom_metrics/success_mean", "evaluation/success_0"],
-        "Slow Rate": ["ray/tune/evaluation/custom_metrics/slow_mean", "evaluation/slow_0"],
-        "Collision Rate": ["ray/tune/evaluation/custom_metrics/collision_mean", "evaluation/collision_0"],
+        "Success Rate": ["ray/tune/evaluation/custom_metrics/success_mean", "evaluation/success_0", "Metrics/success"],
+        "Slow Rate": ["ray/tune/evaluation/custom_metrics/slow_mean", "evaluation/slow_0", "Metrics/slow"],
+        "Collision Rate": ["ray/tune/evaluation/custom_metrics/collision_mean", "evaluation/collision_0", "Metrics/collision"],
     }
     data_from_subdirectories = {}
 
@@ -68,6 +69,9 @@ if __name__ == "__main__":
             # if "grid" in subdirectory:
             data_from_subdirectories[subdirectory] = load_tensorboard_data_from_pkl(subdirectory,
                                                                                     file_name=saved_file_name)
+
+    # create dataframe for final results
+    final_results = pd.DataFrame(columns=("model", *names_for_y_axes.keys()))
     # Initialize lists to store mean curves for each model
     for plot_key, possible_keys in names_for_y_axes.items():
         # Plotting
@@ -76,6 +80,7 @@ if __name__ == "__main__":
         for model, dict_x in data_from_subdirectories.items():
             for key in possible_keys:
                 if key in dict_x:
+                    model_name = os.path.split(model)[-1]
                     # Find the first matching timestep key or use default
                     time_steps = next(
                         (dict_x[timestep_key] for timestep_key in timestep_keys if timestep_key in dict_x),
@@ -103,12 +108,18 @@ if __name__ == "__main__":
 
                     # Plot shaded area for mean curve
                     plt.fill_between(mean_steps, np.clip(mean_values - std_values, min_values, max_values),
-                                     np.clip(mean_values + std_values, min_values, max_values), alpha=0.15,
-                                     label=f'{os.path.split(model)[-1]}')
+                                     np.clip(mean_values + std_values, min_values, max_values), alpha=0.15)
 
                     # Plot mean curve
-                    plt.plot(mean_steps, mean_values)
+                    if "SAC" in model_name or "CPO" in model_name or "P3O" in model_name:
+                        plt.plot(mean_steps.iloc[::20], mean_values.iloc[::20], label=model_name)
+                    else:
+                        plt.plot(mean_steps, mean_values, label=model_name)
+                    # add record to final dataframe
+                    new_row_df = pd.DataFrame({"model": [model_name], plot_key: [mean_values.iloc[-1]]})
 
+                    # Concatenate the new row DataFrame with the original DataFrame
+                    final_results = pd.concat([final_results, new_row_df], ignore_index=True)
         # Set plot title and labels
         plt.title('Averaged Training Curves with 10 different seeds')
         plt.xlabel(f'{timestep_keys[0].split("/")[-1].replace("_", " ")} [-]')
@@ -119,3 +130,5 @@ if __name__ == "__main__":
         plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_key}.png')}")
         # Display the plot
         plt.show()
+        # print final dataframe as tabulate table
+    print(final_results.groupby('model').sum().sort_values(by="Success Rate").to_markdown())
