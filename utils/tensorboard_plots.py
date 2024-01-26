@@ -132,3 +132,7 @@ if __name__ == "__main__":
         plt.show()
         # print final dataframe as tabulate table
     print(final_results.groupby('model').sum().sort_values(by="Success Rate").to_markdown())
+    latex_table = final_results.groupby('model').sum().sort_values(by="Success Rate").to_latex()
+    filename = os.path.join(folder_path, 'latex_table.tex')
+    with open(filename, 'w') as file:
+        file.write(latex_table)
