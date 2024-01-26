@@ -45,19 +45,20 @@ if __name__ == "__main__":
     folder_path = '/cache/PrefVeC_results_forv2/extra_algos/'
     saved_file_name = "data_extract_pd"
     timestep_keys = ["ray/tune/episodes_total", ]
+    smoothing_window = 3
     # List all subdirectories (assuming each subdirectory corresponds to a different model)
     subdirectories = [os.path.join(folder_path, name) for name in os.listdir(folder_path) if
                       os.path.isdir(os.path.join(folder_path, name))]
     extract_data_from_event_files(subdirectories, save_file_name=saved_file_name, overwrite=False)
 
     # reverse key and value for names_for_y_axes
-    names_for_y_axes = {"Mean Episode Reward": ["ray/tune/evaluation/episode_reward_mean"],
-                        "Mean Episode Length": ["ray/tune/evaluation/episode_len_mean"],
-                        "Success Rate": ["ray/tune/evaluation/custom_metrics/success_mean"],
-                        "Slow Rate": ["ray/tune/evaluation/custom_metrics/slow_mean"],
-                        "Collision Rate": ["ray/tune/evaluation/custom_metrics/collision_mean",
-                                           "evaluation/collision_0"],
-                        }
+    names_for_y_axes = {
+        # "Mean Episode Reward": ["ray/tune/evaluation/episode_reward_mean", "evaluation/reward_0"],
+        # "Mean Episode Length": ["ray/tune/evaluation/episode_len_mean", ""],
+        "Success Rate": ["ray/tune/evaluation/custom_metrics/success_mean", "evaluation/success_0"],
+        "Slow Rate": ["ray/tune/evaluation/custom_metrics/slow_mean", "evaluation/slow_0"],
+        "Collision Rate": ["ray/tune/evaluation/custom_metrics/collision_mean", "evaluation/collision_0"],
+    }
     data_from_subdirectories = {}
 
     mean_curves = {}
@@ -85,26 +86,24 @@ if __name__ == "__main__":
                         time_steps = pd.concat([time_steps, time_steps], axis=1)
                         dict_x = pd.concat([dict_x, dict_x], axis=1)
 
-                    # Apply mask for time_steps less than 0.2e5
-                    mask = (time_steps < 0.2e5).mean(axis=1) > 0
-                    dict_values = dict_x[key][mask]
+                    # Apply mask for time_steps less than max_episodes
+                    mask = (time_steps < max_episodes).any(axis=1)
+                    nan_mask = dict_x[key][mask].notna().any(axis=1)
+                    mean_steps = time_steps[mask][nan_mask].mean(axis=1).sort_values()
+                    dict_values = dict_x[key][mask][nan_mask].reindex(mean_steps.index)
+                    if smoothing_window > 1:
+                        dict_values = dict_values.rolling(window=smoothing_window, min_periods=1).mean()
 
                     # Calculate statistics
-                    mean_steps = time_steps[mask].mean(axis=1)
+                    assert (dict_values.index == mean_steps.index).all()
                     mean_values = dict_values.mean(axis=1)
-                    std_values = dict_values.std(axis=1)
+                    std_values = dict_values.std(axis=1).fillna(0)
                     min_values = dict_values.min(axis=1)
                     max_values = dict_values.max(axis=1)
-                    # if std_values.sum() == 0:
-                    #     # add random noise to std_values to avoid error between 0 and 0.1
-                    #     noise = np.random.rand(std_values.shape[0]) * 0.1
-                    #     std_values += noise
-                    #     min_values -= noise
-                    #     max_values += noise
 
                     # Plot shaded area for mean curve
                     plt.fill_between(mean_steps, np.clip(mean_values - std_values, min_values, max_values),
-                                     np.clip(mean_values + std_values, min_values, max_values), alpha=0.3,
+                                     np.clip(mean_values + std_values, min_values, max_values), alpha=0.15,
                                      label=f'{os.path.split(model)[-1]}')
 
                     # Plot mean curve
@@ -117,6 +116,6 @@ if __name__ == "__main__":
 
         # Add legend
         plt.legend()
-
+        plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_key}.png')}")
         # Display the plot
         plt.show()
