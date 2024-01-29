@@ -101,34 +101,47 @@ if __name__ == "__main__":
                     dict_values = dict_x[key][mask][nan_mask].reindex(mean_steps.index)
                     # Smooth data if necessary
                     if smoothing_window > 1:
-                        dict_values = dict_values.rolling(window=smoothing_window, min_periods=1).mean()
+                        smoothed_values = dict_values.rolling(window=smoothing_window, min_periods=1).mean()
+                    else:
+                        smoothed_values = dict_values
 
                     # Calculate statistics
-                    assert (dict_values.index == mean_steps.index).all()
-                    mean_values = dict_values.mean(axis=1)
-                    std_values = dict_values.std(axis=1).fillna(0)
-                    min_values = dict_values.min(axis=1)
-                    max_values = dict_values.max(axis=1)
+                    assert (smoothed_values.index == mean_steps.index).all()
+                    mean_values = smoothed_values.mean(axis=1)
+                    std_values = smoothed_values.std(axis=1).fillna(0)
+                    min_values = smoothed_values.min(axis=1)
+                    max_values = smoothed_values.max(axis=1)
+
+                    # add record to final dataframe
+                    new_row_df = pd.DataFrame({"model": [model_name], plot_key: [dict_values.mean(axis=1).iloc[-1]]})
+                    final_results = pd.concat([final_results, new_row_df], ignore_index=True)
+
+                    # check mean_values and downsample if necessary. Only plot 100 datapoints
+                    if len(mean_values) > 100:
+                        down_sample_factor = int(len(mean_values) / 100)
+                        mean_values = mean_values.iloc[::down_sample_factor]
+                        mean_steps = mean_steps.iloc[::down_sample_factor]
+                        std_values = std_values.iloc[::down_sample_factor]
+                        min_values = min_values.iloc[::down_sample_factor]
+                        max_values = max_values.iloc[::down_sample_factor]
 
                     # Plot shaded area for mean curve
                     plt.fill_between(mean_steps, np.clip(mean_values - std_values, min_values, max_values),
                                      np.clip(mean_values + std_values, min_values, max_values), alpha=0.15)
 
-                    # Plot mean
-                    # downsample for SAC, CPO and P3O due to high number of datapoints
-                    if "SAC" in model_name or "CPO" in model_name or "P3O" in model_name:
-                        plt.plot(mean_steps.iloc[::20], mean_values.iloc[::20], label=model_name)
-                    else:
-                        plt.plot(mean_steps, mean_values, label=model_name)
-                    # add record to final dataframe
-                    new_row_df = pd.DataFrame({"model": [model_name], plot_key: [mean_values.iloc[-1]]})
-                    final_results = pd.concat([final_results, new_row_df], ignore_index=True)
+                    # Plot mean curve
+                    plt.plot(mean_steps, mean_values, label=model_name)
 
         # Set plot title, legend and labels
         plt.title('Averaged Training Curves with different seeds')
         plt.xlabel(f'{timestep_keys[0].split("/")[-1].replace("_", " ")} ')
         plt.ylabel(f'{plot_key}')
         plt.legend()
+        if "Collision" in plot_key:
+            plt.yscale('log')
+
+        # plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left', borderaxespad=0.)
+        # plt.tight_layout()
         # Save the plot
         plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_key}.png')}")
         # Save the plot as tex file
