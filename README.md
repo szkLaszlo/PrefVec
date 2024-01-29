@@ -58,3 +58,13 @@ or run the example file:
 By default the code will log the training in some folder.
 You can change it in utils/wrapper.py GLOBAL_LOG_PATH.
 Tensorboard and visual logs are available.*
+
+## Recreating the safe baseline results:
+For safeRL comparison check out the safeRL_baseline branch and see README.md in the safe_algo folder.
+## Recreating the PPO and SAC results:
+Similarly, for PPO and SAC comparison check out the safeRL_baseline branch.
+You can run the original container and inside the container pip install the req_for_rllib.txt. Then you can run the rllib_examples.sh. 
+If pip install does fail maching the versions, restart the container, try with ray==2.3.1 in the req_for_rllib.txt then install ray==2.4.0.
+
+## Reward component ablation:
+To recreate the results of the reward component ablation, you need to run './experiments.sh'  inside the docker on the main branch.
