@@ -9,7 +9,7 @@ custom_cfgs = {
         'parallel': 1,
     },
     'algo_cfgs': {
-        'steps_per_epoch': 20000,
+        'steps_per_epoch': 500,
     },
     'model_cfgs': {
         'actor_type': 'discrete', },
