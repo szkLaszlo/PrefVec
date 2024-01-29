@@ -41,8 +41,9 @@ def load_tensorboard_data_from_pkl(pkl_path, file_name="data_extract_summary"):
 
 
 if __name__ == "__main__":
+    import tikzplotlib
     # Folder containing tensorboard files
-    folder_path = '/cache/PrefVeC_results_forv2/extra_algos/'
+    folder_path = '/cache/PrefVeC_results_forv2/ablation_PER'
     saved_file_name = "data_extract_pd"
     timestep_keys = ["ray/tune/episodes_total", "TotalEpisodes"]
     max_episodes = 20000 if "grid" in folder_path else 300000 if "ablation" in folder_path else 90000
@@ -129,7 +130,9 @@ if __name__ == "__main__":
         plt.legend()
         plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_key}.png')}")
         # Display the plot
+        tikzplotlib.save(f'{os.path.join(folder_path, f"{plot_key}.tex")}')
         plt.show()
+
         # print final dataframe as tabulate table
     print(final_results.groupby('model').sum().sort_values(by="Success Rate").to_markdown())
     latex_table = final_results.groupby('model').sum().sort_values(by="Success Rate").to_latex()

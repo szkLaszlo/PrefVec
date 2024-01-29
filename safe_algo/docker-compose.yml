@@ -5,7 +5,6 @@ services:
     volumes:
      - /home:/home
      - $HOME/workspace/:/workspace
-     - $HOME/workspace/omnisafe_zjy:/omnisafe_zjy
      - /:/mnt/host
      - ./entry.sh:/entry.sh
      - ./user_entry.sh:/user_entry.sh
