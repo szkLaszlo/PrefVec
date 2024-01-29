@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import torch
 from torch import nn
-
+import warnings
 from PrefVeC.model_prefvec.preferences import CLPreferenceSelector, DefaultPolicySelector
 from PrefVeC.QN.q_agent import DQNWrapper
 from PrefVeC.utils.helper_functions import create_state_action_pairs, calculate_sfs_and_get_action_values, \
@@ -204,6 +204,7 @@ class FastRLWrapper(DQNWrapper):
 
         self.mix_policies = mix_policies
         self.use_cumulants = True
+        self.rho = kwargs.get("rho", 0.1)
 
     def forward_for_action(self, state_, **kwargs):
         """
@@ -421,13 +422,16 @@ class FastRLWrapper(DQNWrapper):
         return min_value_to_change
 
     def select_min_value_from_list(self, list_of_diffs):
-        # select min change value based on the expected 10% action change
-        min_value_to_change = list_of_diffs[int(len(list_of_diffs) * 0.1) + 1]
+        # select min change value based on the expected self.rho % action change
+        min_value_to_change = list_of_diffs[int(len(list_of_diffs) * self.rho) + 1]
         if min_value_to_change > 0:
             idx = 1
             for idx, min_ in enumerate(list_of_diffs):
                 if min_ > 0:
+                    warnings.warn(f"Could not find a value to change with the given rho value."
+                                  f"Selecting {idx/len(list_of_diffs)}% = {list_of_diffs[idx-1]} weight change")
                     break
+
             min_value_to_change = list_of_diffs[idx - 1]
         return min_value_to_change
 
