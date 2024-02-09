@@ -23,7 +23,7 @@ def load_tensorboard_data(logdir):
             data[tag] = pd.DataFrame({tag: values}, index=steps)
         event_data.append(pd.concat(data.values(), axis=1))
 
-    return pd.concat(event_data, axis=1)
+    return pd.concat(event_data, axis=1, join="inner")
 
 
 def extract_data_from_event_files(subdirectories, save_file_name="data_extract_summary", overwrite=False):
@@ -43,12 +43,16 @@ def load_tensorboard_data_from_pkl(pkl_path, file_name="data_extract_summary"):
 if __name__ == "__main__":
     import tikzplotlib
 
+    # from matplotlib import rc
+    #
+    # # Enable LaTeX rendering
+    # rc('text', usetex=True)
     # Folder containing tensorboard files
     folder_path = '/cache/PrefVeC_results_forv2/ablation_PER'
     saved_file_name = "data_extract_pd"
     timestep_keys = ["ray/tune/episodes_total", "TotalEpisodes"]
-    max_episodes = 20000 if "grid" in folder_path else 300000 if "ablation" in folder_path else 90000
-    smoothing_window = 5
+    max_episodes = 90000
+    smoothing_window = 50
     # List all subdirectories (assuming each subdirectory corresponds to a different model)
     subdirectories = [os.path.join(folder_path, name) for name in os.listdir(folder_path) if
                       os.path.isdir(os.path.join(folder_path, name))]
@@ -56,10 +60,11 @@ if __name__ == "__main__":
 
     # reverse key and value for names_for_y_axes
     names_for_y_axes = {
-        # "Mean Episode Reward": ["ray/tune/evaluation/episode_reward_mean", "evaluation/reward_0"],
-        # "Mean Episode Length": ["ray/tune/evaluation/episode_len_mean", ""],
+        "Mean Episode Reward": ["ray/tune/evaluation/episode_reward_mean", "evaluation/reward_0", "Metrics/EpRet"],
+        "Mean Episode Length": ["ray/tune/evaluation/episode_len_mean", ""],
         "Success Rate": ["ray/tune/evaluation/custom_metrics/success_mean", "evaluation/success_0", "Metrics/success"],
         "Slow Rate": ["ray/tune/evaluation/custom_metrics/slow_mean", "evaluation/slow_0", "Metrics/slow"],
+        "Mean Episode Distance": ["ray/tune/evaluation/custom_metrics/distance_mean", "evaluation/distance"],
         "Collision Rate": ["ray/tune/evaluation/custom_metrics/collision_mean", "evaluation/collision_0",
                            "Metrics/collision"],
     }
@@ -81,7 +86,7 @@ if __name__ == "__main__":
         for model, dict_x in data_from_subdirectories.items():
             for key in possible_keys:
                 if key in dict_x:
-                    model_name = os.path.split(model)[-1]
+                    model_name = f"${os.path.split(model)[-1]}$"
                     # Find the first matching timestep key or use default
                     time_steps = next(
                         (dict_x[timestep_key] for timestep_key in timestep_keys if timestep_key in dict_x),
@@ -133,7 +138,7 @@ if __name__ == "__main__":
                     plt.plot(mean_steps, mean_values, label=model_name)
 
         # Set plot title, legend and labels
-        plt.title('Averaged Training Curves with different seeds')
+        plt.title('')
         plt.xlabel(f'{timestep_keys[0].split("/")[-1].replace("_", " ")} ')
         plt.ylabel(f'{plot_key}')
         plt.legend()
@@ -142,10 +147,12 @@ if __name__ == "__main__":
 
         # plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left', borderaxespad=0.)
         # plt.tight_layout()
+        plot_name = str(plot_key).replace(" ", "_").lower()
         # Save the plot
-        plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_key}.png')}")
+        plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_name}.png')}")
+        # plt.savefig(fname=f"{os.path.join(folder_path, f'{plot_name}.pdf')}")
         # Save the plot as tex file
-        tikzplotlib.save(f'{os.path.join(folder_path, f"{plot_key}.tex")}')
+        tikzplotlib.save(f'{os.path.join(folder_path, f"{plot_name}.tex")}')
         # Display the plot
         plt.show()
 
